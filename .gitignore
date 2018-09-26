@@ -34,3 +34,6 @@ vignettes/*.pdf
 
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
+data/en_US.blogs.txt
+data/en_US.news.txt
+data/en_US.twitter.txt
