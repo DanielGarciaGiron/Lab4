@@ -71,3 +71,53 @@ DatosLimpios<-tm_map(DatosLimpios, removeNumbers)
 
 #Se eliminan artículos, preposiciones y conjunciones (stopwords)
 DatosLimpios<-tm_map(DatosLimpios, removeWords, stopwords('english'))
+
+#Eliminación de "malas palabras" por medio de una lista de estas
+MP <- file("./data/profanities.txt", "r")
+MPVector <- VectorSource(readLines(MP))
+DatosLimpios <- tm_map(DatosLimpios, removeWords, MPVector)
+
+#Eliminación de url
+DatosLimpios <- gsub("http\\w+","", DatosLimpios)
+
+#------------------------ Tokenización con ngramas -----------------------------------#
+
+#Tokenización de Bigramas
+BigramToken <- function(x) unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = FALSE)
+
+#Tokenización de Trigramas
+TrigramToken <- function(x) unlist(lapply(ngrams(words(x), 3), paste, collapse = " "), use.names = FALSE)
+
+#Función para obtener las frecuencias de cada palabra
+Frecuencia <- function(tdm){
+  freq <- sort(rowSums(as.matrix(tdm)), decreasing=TRUE)
+  Frecuencia <- data.frame(word=names(freq), freq=freq)
+  return(Frecuencia)
+}
+
+#Remoción de palabras que aparecen menos de una vez
+Unigrama <- removeSparseTerms(TermDocumentMatrix(DatosLimpios), 0.9999)
+
+#Se obtienen las frecuencias de los unigramas
+FrecUnigrama <- Frecuencia(Unigrama)
+
+#Remoción de palabras que aparecen menos de una vez
+Bigrama <- removeSparseTerms(TermDocumentMatrix(DatosLimpios, control = list(tokenize = BigramToken)), 0.9999)
+
+#Se obtienen las frecuencias de los bigramas
+FrecBigrama <- Frecuencia(Bigrama)
+
+#Remoción de palabras que aparecen menos de una vez
+Trigrama <- removeSparseTerms(TermDocumentMatrix(DatosLimpios, control = list(tokenize = TrigramToken)), 0.9999)
+
+#Se obtienen las frecuencias de los trigramas
+FrecTrigrama <- Frecuencia(Trigrama)
+
+#Graficación de los datos
+PlotFrec <- function(data, title) {
+  ggplot(data[1:25,], aes(reorder(word, -freq), freq)) +
+    labs(x = "Palabras/Frases", y = "Frecuencia") +
+    ggtitle(title) +
+    theme(axis.text.x = element_text(angle = 90, size = 12, hjust = 1)) +
+    geom_bar(stat = "identity")
+}
