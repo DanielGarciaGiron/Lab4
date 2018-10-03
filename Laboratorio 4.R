@@ -4,7 +4,7 @@
 #------------------------------------------------------------#
 
 #----- Instalación e importación de librerias necesarias para correr el programa ----#
-for (libreria in c("stringr","tm", "R.utils","openNLP","rJava","qdap","RWeka","ggplot2")) {
+for (libreria in c("stringr","tm", "R.utils","openNLP","rJava","qdap","RWeka","ggplot2","stylo")) {
   if (!require(libreria, character.only=T)) {
     install.packages(libreria)
     library(libreria, character.only=T)
@@ -141,3 +141,87 @@ PlotFrec(FrecBigrama, "Bigramas más comúnes (Top 25)")
 #Trigramas
 PlotFrec(FrecTrigrama, "Trigramas más comúnes (Top 25)")
 
+
+
+predictNextWord <- function(input)
+{
+  wordInput <- cleanInput(input)
+  wordCount <- length(wordInput)
+  prediction <- c()
+  
+  if(wordCount>3)
+  {
+    wordInput <- wordInput[(wordCount-2):wordCount]
+    prediction <- matchinFourGranm(wordInput[1],wordInput[2],wordInput[3])
+  }
+  if(wordCount ==2)
+  {
+    prediction <- matchThreeGram(wordInput[1],wordInput[2])
+  }
+  if(wordCount ==1)
+  {
+    prediction <- matchTwoGram(wordInput[1])
+  }
+  
+  if(wordCount == 0)
+  {
+    prediction <- "Casilla vacia"
+  }
+  
+  if(length(prediction)==0)
+  {
+    prediction <- "No se encontraron resultados"
+  }
+  
+  if(length(prediction) < 5)
+  {
+    prediction
+  }
+  else
+  {
+    prediction[1:5]
+  }
+}
+
+
+cleanInput <- function(text){
+  textInput <- tolower(text)
+  textInput <- removePunctuation(textInput)
+  textInput <- removeNumbers(textInput)
+  textInput <- str_replace_all(textInput, "[^[:alnum:]]", " ")
+  textInput <- stripWhitespace(textInput)
+  textInput <- txt.to.words.ext(textInput, language="English.all", preserve.case = TRUE)
+  return(textInput)
+}
+
+
+
+matchThreeGram <- function(inputWord1,inputWord2)
+{
+  predictWord <- filter(Trigrama,( word1 == inputWord1 & word2 == inputWord2))$word3
+  if(length(predictWord)==0)
+  {
+    predictWord <- filter(Trigrama,(word2 == inputWord2))$word3 
+    
+    if(length(predictWord)== 0)
+    {
+      predictWord <- filter(Trigrama,(word1 == inputWord2))$word2 
+      
+      if(length(predictWord) ==0 )
+      {
+        predictWord <- matchTwoGram(inputWord2)
+      }
+      
+    }
+  }
+  predictWord
+}
+
+
+matchTwoGram <- function(inputWord1)
+{
+  predictWord <- filter(Bigrama,( word1 == inputWord1 ))$word2
+  
+  predictWord
+  
+}
